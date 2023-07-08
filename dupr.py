@@ -129,8 +129,8 @@ class ImagesDS(Dataset):
 
         lb2, rb2, tb2, bb2 = rotated_left, rotated_right, rotated_top, rotated_bottom
 
-        B1 = torch.Tensor([index, lb1, tb1, rb1, bb1])
-        B2 = torch.Tensor([index, lb2, tb2, rb2, bb2])
+        B1 = torch.Tensor([0, lb1, tb1, rb1, bb1])
+        B2 = torch.Tensor([0, lb2, tb2, rb2, bb2])
 
         return I1, B1, I2, B2
 
@@ -251,7 +251,7 @@ class DUPR_Model(nn.Module):
         patch_size = keys.shape[2]
 
         ptr = int(self.queue_patch_ptr)
-        assert self.K % batch_size * patch_size == 0
+        #assert self.K % (batch_size * patch_size) == 0
 
         # replace the keys at ptr (dequeue and enqueue)
         tt = torch.flatten(keys.permute(1, 0, 2), 1)
@@ -268,7 +268,7 @@ class DUPR_Model(nn.Module):
         batch_size = keys.shape[0]
 
         ptr = int(self.queue_image_ptr)
-        assert self.K % batch_size == 0
+        #assert self.K % batch_size == 0
 
         # replace the keys at ptr (dequeue and enqueue)
         self.queue_image[:, ptr:ptr + batch_size, fm] = keys.T
@@ -351,6 +351,7 @@ class DUPR_trainer:
                  T=0.07
                  ):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        #self.device = torch.device("cpu")
         self.alpha = alpha
         self.beta = beta
         self.dim = dim
@@ -385,9 +386,10 @@ class DUPR_trainer:
         # apply temperature
         logits /= self.T
         # labels: positive key indicators
-        labels = torch.zeros(logits.shape[-1], dtype=torch.long, device=self.device)
+        labels = torch.zeros((logits.shape[0],logits.shape[-1]), dtype=torch.long, device=self.device)
         # dequeue and enqueue
-        self.model._dequeue_and_enqueue_patch(k, fm)
+        if(self.model.training):
+            self.model._dequeue_and_enqueue_patch(k, fm)
 
         return logits, labels
 
@@ -403,7 +405,8 @@ class DUPR_trainer:
         # labels: positive key indicators
         labels = torch.zeros(logits.shape[0], dtype=torch.long, device=self.device)
         # dequeue and enqueue
-        self.model._dequeue_and_enqueue_image(k, fm)
+        if(self.model.training):
+            self.model._dequeue_and_enqueue_image(k, fm)
 
         return logits, labels
 
@@ -441,6 +444,10 @@ class DUPR_trainer:
                 B1 = B1.to(self.device).float()
                 B2 = B2.to(self.device).float()
 
+                for i in range(B1.size()[0]):
+                    B1[i,0]=i
+                    B2[i,0]=i
+
                 r1, r2, v1, v2 = self.model(I1, I2, B1, B2)
 
                 loss = 0
@@ -450,7 +457,7 @@ class DUPR_trainer:
                     patch_logits, patch_labels = self.patch_loss(r1[i], r2[i], i)
                     image_logits, image_labels = self.image_loss(v1[i], v2[i], i)
 
-                    loss_patch_m = criterion(patch_logits, patch_labels.view(1, -1))
+                    loss_patch_m = criterion(patch_logits, patch_labels)
                     loss_image_m = criterion(image_logits, image_labels)
                     loss_image_sigma += self.alpha[i] * loss_image_m
                     loss_patch_sigma += self.beta[i] * loss_patch_m
@@ -513,7 +520,7 @@ class DUPR_trainer:
                         patch_logits, patch_labels = self.patch_loss(r1[i], r2[i], i)
                         image_logits, image_labels = self.image_loss(v1[i], v2[i], i)
 
-                        loss_patch_m = criterion(patch_logits, patch_labels.view(1, -1))
+                        loss_patch_m = criterion(patch_logits, patch_labels)
                         loss_image_m = criterion(image_logits, image_labels)
                         loss_image_sigma += self.alpha[i] * loss_image_m
                         loss_patch_sigma += self.beta[i] * loss_patch_m
@@ -591,14 +598,14 @@ if __name__ == '__main__':
 
     train_imgs, val_imgs = load_files(train_path, val_path)
 
-    train_DS = ImagesDS(train_imgs[0:200])
+    train_DS = ImagesDS(train_imgs[0:100])
     val_DS = ImagesDS(val_imgs[0:10])
 
     batch_size = config.batch_size
     train_loader = torch.utils.data.DataLoader(train_DS, batch_size=batch_size, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_DS, batch_size=batch_size, shuffle=True)
 
-    S_sums = (196 + 49 + 9 + 9) * 15
+    S_sums = ((196 + 49 + 9 + 9) * 15)*batch_size
     model_trainer = DUPR_trainer(dim=128, K=S_sums, m=0.999, T=0.07)  # K is multiply of 263
     model_trainer.make_optimizer(0.0001, 0.5, 1)
 
@@ -614,6 +621,7 @@ if __name__ == '__main__':
             report_path=report_path
     )
 
+    report_path = os.path.join(sys.path[0], 'report')
     report = pd.read_csv(os.path.join(report_path, report_fileName))
     train_report = report[report['mode'] == "train"].groupby("epoch").last()
     val_report = report[report['mode'] == "val"].groupby("epoch").last()
