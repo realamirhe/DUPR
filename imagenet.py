@@ -22,19 +22,19 @@ if __name__ == '__main__':
     train_DS = ImagesDS(train_images)
     val_DS = ImagesDS(val_images)
 
-    batch_size = training_config.batch_size
+    batch_size = training_config.batch_size_DUPR
     train_loader = torch.utils.data.DataLoader(train_DS, batch_size=batch_size, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_DS, batch_size=batch_size, shuffle=True)
 
-    S_sums = ((196 + 49 + 9 + 9) * 32) * batch_size
+    S_sums = ((196 + 49 + 9 + 9) * 32) * 8
     model_trainer = DUPRTrainer(batch_size=batch_size, dim=128, K=S_sums, m=0.999, T=0.07)  # K is multiply of 263
-    model_trainer.make_optimizer(0.0001, 0.5, 1)
+    model_trainer.make_optimizer(training_config.DUPR_lr,training_config.DUPR_gamma, training_config.DUPR_step)
 
     if(training_config.is_colab):
         # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
         # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/report
-        model_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'trained_model')
-        report_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'report')
+        model_path = training_config.path_colab_DUPR_model
+        report_path = training_config.path_colab_DUPR_report
     else:
         # TODO: !mkdir -p training_model
         # TODO: !mkdir -p report
