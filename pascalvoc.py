@@ -2,7 +2,7 @@ import torch
 from torch.utils.data import DataLoader, Subset
 from tqdm import tqdm
 
-from config import training_config
+from config import TrainingArg
 from dataloader import PascalVoc
 from nets.pascalvoc_trainer import evaluate, get_object_detection_model, train_one_epoch
 from utils import collate_fn
@@ -24,15 +24,15 @@ if __name__ == '__main__':
     dataset_train_val_loader = DataLoader(
             dataset_train_val,
             # TODO: read from another config reader
-            batch_size=training_config.batch_size,
-            num_workers=training_config.num_workers,
+            batch_size=TrainingArg.batch_size_pascalVOC_train,
+            num_workers=TrainingArg.num_workers,
             collate_fn=collate_fn,
             shuffle=True)
     dataset_test_loader = DataLoader(
             dataset_test,
             # TODO: read from another config reader
-            batch_size=training_config.batch_size,
-            num_workers=training_config.num_workers,
+            batch_size=TrainingArg.batch_size_pascalVOC_test,
+            num_workers=TrainingArg.num_workers,
             collate_fn=collate_fn,
             shuffle=False)
 
