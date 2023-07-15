@@ -607,7 +607,7 @@ if __name__ == '__main__':
     if(training_config.is_colab):
         # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
         # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/report
-        model_path = training_config.path_colab_DUPR_model
+        model_path = training_config.model_path.colab
         report_path = training_config.path_colab_DUPR_report
     else:
         # TODO: !mkdir -p training_model

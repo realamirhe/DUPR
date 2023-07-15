@@ -5,12 +5,13 @@ import pandas as pd
 import torch
 from matplotlib import pyplot as plt
 
-from config import training_config
-from dataloader import ImagesDS
+from config import pretraining_conf
+from dataloader import ImagesDataset
 from nets.duprtrainer import DUPRTrainer
 from utils import load_files
 
 if __name__ == '__main__':
+    # TODO: add dataset downloader and configuration
     dataset_path = "imagenette2-320"
     train_path = os.path.join(dataset_path, "train")
     val_path = os.path.join(dataset_path, "val")
@@ -18,35 +19,46 @@ if __name__ == '__main__':
     val_path = os.path.join(sys.path[0], val_path)
 
     train_images, val_images = load_files(train_path, val_path)
-    print(len(train_images))
-    train_DS = ImagesDS(train_images)
-    val_DS = ImagesDS(val_images)
+    print(f"Loaded {len(train_images)} images")
+    train_DS = ImagesDataset(train_images)
+    val_DS = ImagesDataset(val_images)
 
-    batch_size = training_config.batch_size_DUPR
+    batch_size = pretraining_conf.batch_size_DUPR
     train_loader = torch.utils.data.DataLoader(train_DS, batch_size=batch_size, shuffle=True)
     val_loader = torch.utils.data.DataLoader(val_DS, batch_size=batch_size, shuffle=True)
 
-    S_sums = ((196 + 49 + 9 + 9) * 32) * 8
-    model_trainer = DUPRTrainer(batch_size=batch_size, dim=128, K=S_sums, m=0.999, T=0.07)  # K is multiply of 263
-    model_trainer.make_optimizer(training_config.DUPR_lr,training_config.DUPR_gamma, training_config.DUPR_step)
+    # K is multiply of 263
+    K_scale = 8
+    model_trainer = DUPRTrainer(
+            batch_size=batch_size,
+            dim=128,
+            K=((196 + 49 + 9 + 9) * 32) * K_scale,  # S_sums
+            m=0.999,
+            T=0.07
+    )
+    model_trainer.make_optimizer(
+            pretraining_conf.optimizer.lr,
+            pretraining_conf.optimizer.gamma,
+            pretraining_conf.optimizer.step
+    )
 
-    if(training_config.is_colab):
+    if pretraining_conf.is_colab:
         # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
         # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/report
-        model_path = training_config.path_colab_DUPR_model
-        report_path = training_config.path_colab_DUPR_report
+        model_path = pretraining_conf.model_path.colab
+        report_path = pretraining_conf.path_colab_DUPR_report
     else:
         # TODO: !mkdir -p training_model
         # TODO: !mkdir -p report
-         model_path = os.path.join(sys.path[0],'trained_model')
-         report_path = os.path.join(sys.path[0], 'report')
-    
+        # TODO: Remove the os.path.join(sys.path[0]
+        model_path = os.path.join(sys.path[0], 'trained_model')
+        report_path = os.path.join(sys.path[0], 'report')
 
     model_fileName, report_fileName = model_trainer.train(
             train_loader,
             val_loader,
-            epochs=training_config.epochs,
-            ckpt_save_freq=training_config.epochs,
+            epochs=pretraining_conf.epochs,
+            ckpt_save_freq=pretraining_conf.save_freq,
             ckpt_save_path=model_path,
             report_path=report_path
     )
@@ -55,11 +67,8 @@ if __name__ == '__main__':
     train_report = report[report['mode'] == "train"].groupby("epoch").last()
     val_report = report[report['mode'] == "val"].groupby("epoch").last()
 
-    # plot loss
     plt.title('Loss')
     plt.plot(train_report["avg_train_loss_till_current_batch"], color='blue', label='train')
     plt.plot(val_report["avg_val_loss_till_current_batch"], color='orange', label='validation')
     plt.legend(('train', 'validation'), loc='upper left')
     plt.show()
-
-    model_path = os.path.join(training_config.base_path, 'trained_model')

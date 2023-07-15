@@ -1,19 +1,19 @@
-from tkinter import Image
-
 import numpy as np
 import torchvision.transforms.functional as TF
 
 import torch
 from datasets import Dataset
 from mpmath.identification import transforms
+from PIL import Image
 
 
-class ImagesDS(Dataset):
-    def __init__(self, imgs_list):
+class ImagesDataset(Dataset):
+    def __init__(self, images_list):
         super().__init__()
-        self.imgs_list = imgs_list
+        self.images_list = images_list
 
-    def crop_intersection_transform(self, image, index):
+    @staticmethod
+    def crop_intersection_transform(image):
         x, y = image.size
         p = np.random.rand()
         if p <= 0.5:
@@ -101,13 +101,13 @@ class ImagesDS(Dataset):
         return I1, B1, I2, B2
 
     def __getitem__(self, index):
-        image_path = self.imgs_list[index]
+        image_path = self.images_list[index]
         image = Image.open(image_path)
         if image.mode == "L":
             image = image.convert("RGB")
-        I1, B1, I2, B2 = self.crop_intersection_transform(image, index)
+        I1, B1, I2, B2 = self.crop_intersection_transform(image)
 
         return I1, B1, I2, B2
 
     def __len__(self):
-        return len(self.imgs_list)
+        return len(self.images_list)

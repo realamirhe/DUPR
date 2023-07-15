@@ -17,10 +17,3 @@ def plot_img_bbox(img, targets):
                                  facecolor='none')
         a.add_patch(rect)
     plt.show()
-
-
-
-
-
-
-

@@ -54,7 +54,7 @@ def load_files(train_path, val_path):
 
 
 def clear_colab_gpu_ram():
-    # TODO: uncomment this install in another cell for the colab
+    # TODO: must be hoisted and installed in the colab
     # !pip install numba - q
     from numba import cuda
 
