@@ -20,7 +20,14 @@ from tqdm import tqdm
 
 def load_files(train_path, val_path, source=None):
     if (source == "GoogleDrive"):
-        path = "GDrive/My Drive/Colab Notebooks/imagenette2-320"
+        drive.mount('/content/GDrive/')
+        tar_file_path="GDrive/My Drive/Colab Notebooks/imagenette2-320.tgz"
+        file = tarfile.open(path)
+        # extracting a specific file
+        file.extractall()
+        file.close()
+        
+        path="/content/imagenette2-320"
         train_path = os.path.join(path, train_path)
         val_path = os.path.join(path, val_path)
     if source is None:
@@ -372,17 +379,14 @@ class DUPR_trainer:
 
     def patch_loss(self, q, k, fm):
         self.model._momentum_update_key_encoder()
-        # l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
         k = k.view(*(k.size()[0:2]), -1)
         q = q.view(*(q.size()[0:2]), -1)
         l_pos = torch.einsum('bnc,bnc->bc', [q, k]).unsqueeze(-1)
-        # l_pos = torch.bmm(q, k)
 
-        # negative logits: NxK
+        # negative logits
         keys = self.model.queue_patch.clone().detach()[:, :, fm]
         l_neg = torch.einsum('bnc,dk->bck', [q, keys])
-        # l_neg = torch.dot(q, self.model.queue_patch.clone().detach())
-        # logits: Nx(1+K)
+        # logits
         logits = torch.cat([l_pos, l_neg], dim=2)
         # apply temperature
         logits /= self.T
@@ -396,10 +400,10 @@ class DUPR_trainer:
 
     def image_loss(self, q, k, fm):
         l_pos = torch.einsum('nc,nc->n', [q, k]).unsqueeze(-1)
-        # negative logits: NxK
+        # negative logits
         keys = self.model.queue_patch.clone().detach()[:, :, fm]
         l_neg = torch.einsum('nc,ck->nk', [q, keys])
-        # logits: Nx(1+K)
+        # logits
         logits = torch.cat([l_pos, l_neg], dim=1)
         # apply temperature
         logits /= self.T
@@ -429,9 +433,7 @@ class DUPR_trainer:
                               )
 
         for epoch in tqdm(range(1, epochs + 1)):
-            # top1_acc_train = AverageMeter()
             loss_avg_train = AverageMeter()
-            # top1_acc_val = AverageMeter()
             loss_avg_val = AverageMeter()
 
             self.model.train()
@@ -468,8 +470,6 @@ class DUPR_trainer:
                 self.optimizer.zero_grad()
                 loss.backward()
                 self.optimizer.step()
-                # acc1 = self.accuracy(labels_pred, labels)
-                # top1_acc_train.update(acc1[0], images.size(0))
                 loss_avg_train.update(loss.detach().item(), I1.size(0))
 
                 new_row = pd.DataFrame(
@@ -478,9 +478,7 @@ class DUPR_trainer:
                          "batch_size": I1.size(0), "batch_index": batch_idx,
                          "loss_batch": loss.detach().item(),
                          "avg_train_loss_till_current_batch": loss_avg_train.avg,
-                         "avg_train_top1_acc_till_current_batch": None,
-                         "avg_val_loss_till_current_batch": None,
-                         "avg_val_top1_acc_till_current_batch": None}, index=[0]
+                         "avg_val_loss_till_current_batch": None}, index=[0]
                 )
 
                 report.loc[len(report)] = new_row.values[0]
@@ -489,7 +487,6 @@ class DUPR_trainer:
                 loop_train.set_postfix(
                         loss_batch="{:.4f}".format(loss.detach().item()),
                         train_loss="{:.4f}".format(loss_avg_train.avg),
-                        # train_acc="{:.4f}".format(top1_acc_train.avg),
                         max_len=2, refresh=True
                 )
 
@@ -527,8 +524,6 @@ class DUPR_trainer:
                         loss_patch_sigma += self.beta[i] * loss_patch_m
 
                     loss = loss_image_sigma + loss_patch_sigma
-                    # acc1 = self.accuracy(labels_pred, labels)
-                    # top1_acc_val.update(acc1[0], images.size(0))
                     loss_avg_val.update(loss.detach().item(), I1.size(0))
 
                     new_row = pd.DataFrame(
@@ -539,9 +534,8 @@ class DUPR_trainer:
                              "batch_index": batch_idx,
                              "loss_batch": loss.detach().item(),
                              "avg_train_loss_till_current_batch": None,
-                             "avg_train_top1_acc_till_current_batch": None,
                              "avg_val_loss_till_current_batch": loss_avg_val.avg,
-                             "avg_val_top1_acc_till_current_batch": None}, index=[0]
+                             }, index=[0]
                     )
                     report.loc[len(report)] = new_row.values[0]
 
@@ -549,7 +543,6 @@ class DUPR_trainer:
                     loop_val.set_postfix(
                             loss_batch="{:.4f}".format(loss.detach().item()),
                             val_loss="{:.4f}".format(loss_avg_val.avg),
-                            # val_accuracy="{:.4f}".format(top1_acc_val.avg),
                             refresh=True,
                     )
             lr_scheduler.step()
