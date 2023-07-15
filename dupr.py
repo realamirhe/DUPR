@@ -21,8 +21,8 @@ from tqdm import tqdm
 def load_files(train_path, val_path, source=None):
     if (source == "GoogleDrive"):
         drive.mount('/content/GDrive/')
-        tar_file_path="GDrive/My Drive/Colab Notebooks/imagenette2-320.tgz"
-        file = tarfile.open(path)
+        tgz_file_path="GDrive/My Drive/Colab Notebooks/imagenette2-320.tgz"
+        file = tarfile.open(tgz_file_path)
         # extracting a specific file
         file.extractall()
         file.close()
