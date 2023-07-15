@@ -604,8 +604,16 @@ if __name__ == '__main__':
     model_trainer = DUPR_trainer(dim=128, K=S_sums, m=0.999, T=0.07)  # K is multiply of 263
     model_trainer.make_optimizer(0.0001, 0.5, 1)
 
-    model_path = os.path.join(config.base_path, 'trained_model')
-    report_path = os.path.join(config.base_path, 'report')
+    if(training_config.is_colab):
+        # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
+        # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/report
+        model_path = training_config.path_colab_DUPR_model
+        report_path = training_config.path_colab_DUPR_report
+    else:
+        # TODO: !mkdir -p training_model
+        # TODO: !mkdir -p report
+         model_path = os.path.join(sys.path[0],'trained_model')
+         report_path = os.path.join(sys.path[0], 'report')
 
     model_fileName, report_fileName = model_trainer.train(
             train_loader,
