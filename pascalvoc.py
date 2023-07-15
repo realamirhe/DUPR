@@ -39,7 +39,7 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # TODO: add local downloader!
-    if(TrainingArg.is_colab):
+    if(training_config.is_colab):
         dupr_model_path=training_config.path_colab_DUPR_model
     else:
         dupr_model_path=os.path.join(sys.path[0],training_config.path_local_DUPR_model)
