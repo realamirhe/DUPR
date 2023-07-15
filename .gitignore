@@ -10,8 +10,12 @@ __pycache__/
 # C extensions
 *.so
 
+# REMOVED directories
 .out/
 imagenette2-320/
+junk/
+output_images/
+
 
 # Distribution / packaging
 .Python
