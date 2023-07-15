@@ -24,7 +24,8 @@ def load_files(train_path, val_path, source=None):
         train_path = os.path.join(path, train_path)
         val_path = os.path.join(path, val_path)
     if source is None:
-        path = "DUPR/imagenette2-320"
+        
+        path = os.path.join(sys.path[0],"imagenette2-320")
         train_path = os.path.join(path, train_path)
         val_path = os.path.join(path, val_path)
     classes = os.listdir(train_path)
