@@ -30,9 +30,17 @@ if __name__ == '__main__':
     model_trainer = DUPRTrainer(batch_size=batch_size, dim=128, K=S_sums, m=0.999, T=0.07)  # K is multiply of 263
     model_trainer.make_optimizer(0.0001, 0.5, 1)
 
-    # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
-    model_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'trained_model')
-    report_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'report')
+    if(training_config.is_colab):
+        # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
+        # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/report
+        model_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'trained_model')
+        report_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'report')
+    else:
+        # TODO: !mkdir -p training_model
+        # TODO: !mkdir -p report
+         model_path = os.path.join(sys.path[0],'trained_model')
+         report_path = os.path.join(sys.path[0], 'report')
+    
 
     model_fileName, report_fileName = model_trainer.train(
             train_loader,
@@ -43,7 +51,6 @@ if __name__ == '__main__':
             report_path=report_path
     )
 
-    # report_path = os.path.join(sys.path[0], 'report')
     report = pd.read_csv(os.path.join(report_path, report_fileName))
     train_report = report[report['mode'] == "train"].groupby("epoch").last()
     val_report = report[report['mode'] == "val"].groupby("epoch").last()
