@@ -6,7 +6,7 @@ training_config = to_namedtuple('TrainingArg', {
     # todo: add dataset and update the <PascalVoc/>
 
     # model configs
-    "epochs": 1,
+    "epochs": 25,
     "batch_size_DUPR": 8,
     "batch_size_pascalVOC_train": 8,
     "batch_size_pascalVOC_test": 4,
