@@ -5,10 +5,7 @@ from torchvision.models.detection import fasterrcnn_resnet50_fpn
 from torchvision.models.detection.faster_rcnn import FastRCNNPredictor
 
 
-def get_object_detection_model(num_classes, device):
-    model_path = os.path.join('GDrive/My Drive/Colab Notebooks', 'trained_model')
-    # TODO: update fot the dupr
-    model_fileName = "/content/ckpt_DUPR_epoch20.ckpt"
+def get_object_detection_model(model_path,model_fileName,num_classes, device):
     ckpt_path = os.path.join(model_path, model_fileName)
     checkpoint = torch.load(ckpt_path, map_location=device)
 
