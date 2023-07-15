@@ -16,6 +16,7 @@ from torchvision.models import resnet50, ResNet50_Weights
 from torchvision.models.feature_extraction import create_feature_extractor
 from torchvision.ops import RoIAlign
 from tqdm import tqdm
+from config import training_config
 
 
 def load_files(train_path, val_path, source=None):
