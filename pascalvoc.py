@@ -39,8 +39,12 @@ if __name__ == '__main__':
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # TODO: add local downloader!
+    if(TrainingArg.is_colab):
+        dupr_model_path=TrainingArg.path_colab_DUPR_model
+    else:
+        dupr_model_path=os.path.join(sys.path[0],TrainingArg.dupr_model_file_name)
     # !gdown https://drive.google.com/u/0/uc?id=1-c8ZJbhMX0w5FQR5-lshwK9yZAbhUGJm&export=download
-    object_detector_model = get_object_detection_model(num_classes=len(PascalVoc.CLASSES_NAMES))
+    object_detector_model = get_object_detection_model(dupr_model_path,num_classes=len(PascalVoc.CLASSES_NAMES))
     object_detector_model.to(device)
     print("Faster Rcnn resnet-50 has", sum(p.numel() for p in object_detector_model.parameters() if p.requires_grad),
           "parameters.")
