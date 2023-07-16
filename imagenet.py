@@ -1,5 +1,4 @@
 import os
-import sys
 
 import pandas as pd
 import torch
@@ -8,59 +7,53 @@ from matplotlib import pyplot as plt
 from config import pretraining_conf
 from dataloader import ImagesDataset
 from nets.duprtrainer import DUPRTrainer
-from utils import load_files
 
 if __name__ == '__main__':
-    # TODO: add dataset downloader and configuration
-    dataset_path = "imagenette2-320"
-    train_path = os.path.join(dataset_path, "train")
-    val_path = os.path.join(dataset_path, "val")
-    train_path = os.path.join(sys.path[0], train_path)
-    val_path = os.path.join(sys.path[0], val_path)
+    dataset_path = os.path.join(
+            pretraining_conf.dataset.output,
+            pretraining_conf.dataset.name
+    )
+    batch_size = pretraining_conf.training.batch_size
 
-    train_images, val_images = load_files(train_path, val_path)
-    print(f"Loaded {len(train_images)} images")
-    train_DS = ImagesDataset(train_images)
-    val_DS = ImagesDataset(val_images)
+    train_dataset = ImagesDataset(dataset_path, mode='train')
+    train_loader = torch.utils.data.DataLoader(
+            train_dataset,
+            batch_size=batch_size,
+            shuffle=True
+    )
 
-    batch_size = pretraining_conf.batch_size_DUPR
-    train_loader = torch.utils.data.DataLoader(train_DS, batch_size=batch_size, shuffle=True)
-    val_loader = torch.utils.data.DataLoader(val_DS, batch_size=batch_size, shuffle=True)
+    val_dataset = ImagesDataset(dataset_path, mode='val')
+    val_loader = torch.utils.data.DataLoader(
+            val_dataset,
+            batch_size=batch_size,
+            shuffle=False
+    )
 
     # K is multiply of 263
-    K_scale = 8
+    K_scale = pretraining_conf.model.negative_keys_scale  # 8
     model_trainer = DUPRTrainer(
             batch_size=batch_size,
-            dim=128,
+            dim=pretraining_conf.model.feature_dim,  # 128
             K=((196 + 49 + 9 + 9) * 32) * K_scale,  # S_sums
-            m=0.999,
-            T=0.07
+            m=pretraining_conf.model.moco_momemntum,  # 0.999,
+            T=pretraining_conf.model.softmax_temperature,  # 0.07
     )
+
     model_trainer.make_optimizer(
             pretraining_conf.optimizer.lr,
             pretraining_conf.optimizer.gamma,
             pretraining_conf.optimizer.step
     )
 
-    if pretraining_conf.is_colab:
-        # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/training_model
-        # TODO: !mkdir -p GDrive/My Drive/Colab Notebooks/report
-        model_path = pretraining_conf.model_path.colab
-        report_path = pretraining_conf.path_colab_DUPR_report
-    else:
-        # TODO: !mkdir -p training_model
-        # TODO: !mkdir -p report
-        # TODO: Remove the os.path.join(sys.path[0]
-        model_path = os.path.join(sys.path[0], 'trained_model')
-        report_path = os.path.join(sys.path[0], 'report')
-
+    model_path = pretraining_conf.model_path
+    report_path = pretraining_conf.report_path
     model_fileName, report_fileName = model_trainer.train(
             train_loader,
             val_loader,
-            epochs=pretraining_conf.epochs,
-            ckpt_save_freq=pretraining_conf.save_freq,
-            ckpt_save_path=model_path,
-            report_path=report_path
+            epochs=pretraining_conf.model.epochs,
+            ckpt_save_freq=pretraining_conf.model.save_freq,
+            ckpt_save_path=pretraining_conf.model_path,
+            report_path=pretraining_conf.report_path
     )
 
     report = pd.read_csv(os.path.join(report_path, report_fileName))

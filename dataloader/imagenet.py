@@ -1,16 +1,24 @@
+from glob import glob
+
 import numpy as np
-import torchvision.transforms.functional as TF
+import torchvision.transforms.functional as torchvisionF
 
 import torch
-from datasets import Dataset
-from mpmath.identification import transforms
+
 from PIL import Image
+from torch.utils.data import Dataset
+from torchvision.transforms import transforms
 
 
 class ImagesDataset(Dataset):
-    def __init__(self, images_list):
+    def __init__(self, dataset_path, mode="train"):
         super().__init__()
-        self.images_list = images_list
+        if mode == 'train':
+            self.images_list = glob(f'{dataset_path}/train/**/*.JPEG')
+        else:
+            self.images_list = glob(f'{dataset_path}/val/**/*.JPEG')
+
+        self.classes = [f.split('/').pop() for f in glob(f'{dataset_path}/train/**')]
 
     @staticmethod
     def crop_intersection_transform(image):
@@ -53,9 +61,9 @@ class ImagesDataset(Dataset):
         wb = min([l1 + w1, l2 + w2]) - lb
 
         # crop top, left, height, width
-        t1 = TF.crop(image, t1, l1, h1, w1)
-        t2 = TF.crop(image, t2, l2, h2, w2)
-        # B = TF.crop(image, tb, lb, hb, wb)
+        t1 = torchvisionF.crop(image, t1, l1, h1, w1)
+        t2 = torchvisionF.crop(image, t2, l2, h2, w2)
+        # B = torchvisionF.crop(image, tb, lb, hb, wb)
 
         trf1 = transforms.Compose([
             transforms.ToTensor(),
