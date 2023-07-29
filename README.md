@@ -2,6 +2,12 @@
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1DnNr7nDGMad7fUVFzXuDjj-lr3_HnypO?usp=sharing)
 ## Instruction
 
+
+[![Deeply Unsupervised Patch Re-Identification for Pre-training Object Detectors][1]][1]
+
+<div align="center"><small>Deeply Unsupervised Patch Re-Identification for
+Pre-training Object Detectors</small></div>
+
 ### Download database
 
 ```bash
@@ -40,4 +46,5 @@ python dupr.py
 !mkdir -p $pascal_voc_conf.model_path
 !cp $pascal_voc_conf.model.checkpoint $pascal_voc_conf.model_path
 ```
-- 
+
+  [1]:  https://i.stack.imgur.com/8Mbso.jpg
