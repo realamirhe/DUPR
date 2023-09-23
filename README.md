@@ -1,6 +1,11 @@
-## Colab ready to use model
+Unofficial implementation of [Deeply Unsupervised Patch Re-Identification for
+Pre-training Object Detectors](https://arxiv.org/abs/2103.04814)
+
+
+### Colab ready to use model
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/drive/1DnNr7nDGMad7fUVFzXuDjj-lr3_HnypO?usp=sharing)
-## Instruction
+
+### Instruction
 
 
 [![Deeply Unsupervised Patch Re-Identification for Pre-training Object Detectors][1]][1]
